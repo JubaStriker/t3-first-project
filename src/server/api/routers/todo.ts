@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { todoInput } from "~/types";
 
 
 export const todoRouter = createTRPCRouter({
@@ -12,7 +13,7 @@ export const todoRouter = createTRPCRouter({
         });
         return todos.map(({ id, text, done }) => ({ id, text, done }));
     }),
-    create: protectedProcedure.input().mutation(({ ctx, input }) => {
+    create: protectedProcedure.input(todoInput).mutation(({ ctx, input }) => {
         // throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
         return ctx.prisma.todo.create({
             data: {
