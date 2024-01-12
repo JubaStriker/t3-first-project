@@ -1,24 +1,28 @@
 import { z } from "zod";
 
-import {
-    createTRPCRouter,
-    protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+
 
 export const todoRouter = createTRPCRouter({
-    all: protectedProcedure.query(() => {
-        return [
-            {
-                id: 'fake',
-                text: 'fake test',
-                done: false
+    all: protectedProcedure.query(async ({ ctx }) => {
+        const todos = await ctx.prisma.todo.findMany({
+            where: {
+                userId: ctx.session.user.id,
             },
-            {
-                id: 'fake 2',
-                text: 'fake test 2',
-                done: true
-            }
-
-        ]
-    })
+        });
+        return todos.map(({ id, text, done }) => ({ id, text, done }));
+    }),
+    create: protectedProcedure.input().mutation(({ ctx, input }) => {
+        // throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        return ctx.prisma.todo.create({
+            data: {
+                text: input,
+                user: {
+                    connect: {
+                        id: ctx.session.user.id,
+                    },
+                },
+            },
+        });
+    }),
 });
